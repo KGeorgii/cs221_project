@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soviet Literary Journal Publications - Bayesian Network Analysis</title>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier Prime', 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #d0d0d0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .slide {
+            background: #252525;
+            margin: 30px 0;
+            padding: 40px;
+            border: 2px solid #505050;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            position: relative;
+            page-break-after: always;
+        }
+        
+        .slide::before {
+            content: attr(data-slide);
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: #252525;
+            padding: 0 10px;
+            color: #707070;
+            font-family: 'VT323', monospace;
+            font-size: 1em;
+        }
+        
+        .terminal-header {
+            background: #1a1a1a;
+            border: 1px solid #505050;
+            padding: 10px 20px;
+            margin: 30px 0 20px 0;
+            font-family: 'VT323', monospace;
+            font-size: 1.3em;
+            color: #a0a0a0;
+        }
+        
+        .terminal-header::before {
+            content: "> ";
+            color: #808080;
+        }
+        
+        h1 {
+            color: #e8e8e8;
+            font-size: 2.3em;
+            margin: 20px 0;
+            font-weight: bold;
+            font-family: 'VT323', monospace;
+        }
+        
+        .title-box {
+            border: 3px double #707070;
+            padding: 30px 40px;
+            margin: 30px 0;
+            text-align: center;
+        }
+        
+        .title-box h1 {
+            margin: 10px 0;
+        }
+        
+        .title-box .subtitle-main {
+            font-size: 1.8em;
+            color: #c0c0c0;
+        }
+        
+        h2 {
+            color: #e0e0e0;
+            font-size: 2em;
+            margin: 30px 0 20px 0;
+            font-family: 'VT323', monospace;
+        }
+        
+        .section-title {
+            border: 2px solid #606060;
+            padding: 15px 30px;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+        
+        h3 {
+            color: #c0c0c0;
+            font-size: 1.5em;
+            margin: 25px 0 15px 0;
+            font-family: 'VT323', monospace;
+        }
+        
+        .subtitle {
+            color: #a0a0a0;
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            opacity: 0.8;
+        }
+        
+        ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        ul li {
+            margin: 12px 0;
+            padding-left: 30px;
+            position: relative;
+            font-size: 1em;
+        }
+        
+        ul li:before {
+            content: ">";
+            position: absolute;
+            left: 0;
+            color: #808080;
+            font-weight: bold;
+        }
+        
+        ul ul {
+            margin-top: 10px;
+        }
+        
+        ul ul li {
+            padding-left: 50px;
+        }
+        
+        ul ul li:before {
+            content: "--";
+            left: 20px;
+        }
+        
+        .diagram {
+            background: #1a1a1a;
+            padding: 30px;
+            border: 1px solid #505050;
+            border-radius: 5px;
+            margin: 30px 0;
+        }
+        
+        .bayesian-net-simple {
+            padding: 20px 0;
+        }
+        
+        .net-description {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .net-section {
+            text-align: center;
+        }
+        
+        .net-label {
+            color: #808080;
+            font-family: 'VT323', monospace;
+            font-size: 1em;
+            margin-bottom: 8px;
+        }
+        
+        .net-nodes-row {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .net-arrows-text {
+            color: #a0a0a0;
+            font-family: 'Courier Prime', monospace;
+            font-size: 1.1em;
+            padding: 10px 20px;
+            background: #252525;
+            border-radius: 3px;
+        }
+        
+        .dependency-summary {
+            color: #b0b0b0;
+            font-family: 'VT323', monospace;
+            font-size: 1.1em;
+            margin-top: 10px;
+            padding: 8px 15px;
+            border-top: 1px solid #404040;
+        }
+        
+        .node {
+            border: 2px solid #707070;
+            padding: 10px 16px;
+            background: #2a2a2a;
+            color: #e0e0e0;
+            text-align: center;
+            min-width: 130px;
+            font-family: 'VT323', monospace;
+            font-size: 1.15em;
+            line-height: 1.3;
+        }
+        
+        .node.highlight {
+            border-color: #909090;
+            background: #333;
+        }
+        
+        .node.wide {
+            min-width: 240px;
+        }
+        
+        .stage-transition {
+            text-align: center;
+            margin: 25px 0;
+            padding: 15px 0;
+        }
+        
+        .transition-arrows {
+            color: #909090;
+            font-family: 'Courier Prime', monospace;
+            font-size: 1.4em;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        
+        pre {
+            font-family: 'VT323', monospace;
+            font-size: 1.3em;
+            line-height: 1.4;
+            color: #c8c8c8;
+            overflow-x: auto;
+            white-space: pre;
+        }
+        
+        .stage-label {
+            background: #404040;
+            color: #e8e8e8;
+            padding: 8px 20px;
+            display: inline-block;
+            margin: 15px 0 10px 0;
+            font-weight: bold;
+            font-family: 'VT323', monospace;
+            font-size: 1.3em;
+            border: 1px solid #606060;
+        }
+        
+        .stage2-label {
+            background: #3a3a3a;
+            border-color: #707070;
+        }
+        
+        .formula {
+            background: #2a2a2a;
+            border-left: 3px solid #909090;
+            padding: 15px;
+            margin: 20px 0;
+            font-family: 'VT323', monospace;
+            font-size: 1.3em;
+            color: #b8b8b8;
+        }
+        
+        .results-box {
+            background: #1a1a1a;
+            border: 1px solid #505050;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .results-box strong {
+            color: #e0e0e0;
+            font-size: 1.2em;
+        }
+        
+        .insight-box {
+            background: #1a1a1a;
+            border: 1px solid #606060;
+            border-left: 3px solid #808080;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .insight-box strong {
+            color: #d0d0d0;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            border: 1px solid #505050;
+        }
+        
+        table th {
+            background: #2a2a2a;
+            color: #e0e0e0;
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #505050;
+            font-family: 'VT323', monospace;
+            font-size: 1.2em;
+        }
+        
+        table td {
+            padding: 12px;
+            border: 1px solid #505050;
+            color: #c0c0c0;
+        }
+        
+        table tr:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        
+        .metric {
+            display: inline-block;
+            margin: 10px 20px 10px 0;
+            padding: 10px 15px;
+            background: #1a1a1a;
+            border: 1px solid #505050;
+            border-radius: 3px;
+        }
+        
+        .metric strong {
+            color: #d8d8d8;
+        }
+        
+        strong {
+            color: #e0e0e0;
+        }
+        
+        .condition-box {
+            display: inline-block;
+            border: 2px solid #707070;
+            padding: 10px 25px;
+            margin-bottom: 10px;
+            font-family: 'VT323', monospace;
+            font-size: 1.2em;
+            color: #c0c0c0;
+        }
+        
+        .highlight-green {
+            color: #90b090;
+        }
+        
+        .highlight-red {
+            color: #c09090;
+        }
+        
+        @media print {
+            body {
+                background: white;
+                color: black;
+            }
+            .slide {
+                box-shadow: none;
+                page-break-after: always;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <!-- Slide 1 -->
+        <div class="slide" data-slide="SLIDE_01">
+            <div class="title-box">
+                <h1>SOVIET CULTURAL GATEKEEPING ANALYSIS</h1>
+                <h1 class="subtitle-main">Bayesian ML for Cold War Literary Translation</h1>
+            </div>
+            
+            <div class="terminal-header">PROBLEM_STATEMENT.txt</div>
+            <ul>
+                <li><strong>HISTORICAL_QUESTION:</strong> How did Soviet journals select American literature for translation during Cold War (1950-1991)?</li>
+                <li><strong>TWO_JOURNALS:</strong> Inostrannaia Literatura (IL) vs. Vsesvit</li>
+                <li><strong>DATASET:</strong> 467 records | 183 authors | 5 decades | 5 gen_secretaries</li>
+                <li><strong>RESEARCH_OBJECTIVES:</strong>
+                    <ul>
+                        <li>Stage_1: Predict publication probability p(Published | Author, Decade, Regime)</li>
+                        <li>Stage_2: Predict journal selection p(Journal | Published, Context)</li>
+                        <li>Quantify ideology vs. literary_merit in editorial decisions</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Slide 2 -->
+        <div class="slide" data-slide="SLIDE_02">
+            <h2 class="section-title">BAYESIAN NETWORK ARCHITECTURE</h2>
+            
+            <div class="terminal-header">NETWORK_TOPOLOGY.dag</div>
+            
+            <div class="diagram">
+                <div class="stage-label">STAGE_1: PUBLICATION_DECISION</div>
+                
+                <div class="bayesian-net-simple">
+                    <div class="net-description">
+                        <div class="net-section">
+                            <div class="net-label">ROOT NODES:</div>
+                            <div class="net-nodes-row">
+                                <div class="node">Decade (D)</div>
+                                <div class="node">Author (A)</div>
+                            </div>
+                        </div>
+                        
+                        <div class="net-arrows-text">
+                            D --&gt; GS &nbsp;&nbsp;&nbsp; D --&gt; P &nbsp;&nbsp;&nbsp; A --&gt; P
+                        </div>
+                        
+                        <div class="net-section">
+                            <div class="net-label">INTERMEDIATE:</div>
+                            <div class="net-nodes-row">
+                                <div class="node">General Secretary (GS)</div>
+                            </div>
+                        </div>
+                        
+                        <div class="net-arrows-text">
+                            GS --&gt; P
+                        </div>
+                        
+                        <div class="net-section">
+                            <div class="net-label">TARGET:</div>
+                            <div class="net-nodes-row">
+                                <div class="node highlight">Published (P) [Yes/No]</div>
+                            </div>
+                        </div>
+                        
+                        <div class="dependency-summary">
+                            <strong>P</strong> depends on: <strong>D</strong> (direct) + <strong>GS</strong> + <strong>A</strong>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="formula">
+                    Dependencies: D --&gt; GS, &nbsp; GS --&gt; P, &nbsp; D --&gt; P, &nbsp; A --&gt; P<br>
+                    P(D, GS, A, P) = p(D) * p(GS|D) * p(A) * p(P|D,GS,A)
+                </div>
+                
+                <div class="stage-transition">
+                    <div class="condition-box">IF Published (P = 1) THEN:</div>
+                    <div class="transition-arrows">V &nbsp; V &nbsp; V</div>
+                </div>
+                
+                <div class="stage-label stage2-label">STAGE_2: JOURNAL_SELECTION</div>
+                
+                <div class="bayesian-net-simple">
+                    <div class="net-description">
+                        <div class="net-section">
+                            <div class="net-label">PARENT NODES:</div>
+                            <div class="net-nodes-row">
+                                <div class="node">Gen. Secretary (GS)</div>
+                                <div class="node">Decade (D)</div>
+                                <div class="node">Author (A)</div>
+                            </div>
+                        </div>
+                        
+                        <div class="net-arrows-text">
+                            GS --&gt; J &nbsp;&nbsp;&nbsp; D --&gt; J &nbsp;&nbsp;&nbsp; A --&gt; J
+                        </div>
+                        
+                        <div class="net-section">
+                            <div class="net-label">TARGET:</div>
+                            <div class="net-nodes-row">
+                                <div class="node highlight">Journal (J) [IL / Vsesvit]</div>
+                            </div>
+                        </div>
+                        
+                        <div class="dependency-summary">
+                            <strong>J</strong> depends on: <strong>GS</strong> + <strong>D</strong> + <strong>A</strong>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="formula">
+                    Dependencies: GS --&gt; J, &nbsp; D --&gt; J, &nbsp; A --&gt; J<br>
+                    P(J | D, GS, A, P=1)
+                </div>
+            </div>
+            
+            <div class="insight-box">
+                <strong>INSIGHT:</strong> Two-stage model separates REGIME_CENSORSHIP (what gets published) from EDITORIAL_TASTE (where it appears). Enables causal reasoning about Soviet cultural policy.
+            </div>
+        </div>
+
+        <!-- Slide 3 -->
+        <div class="slide" data-slide="SLIDE_03">
+            <h2 class="section-title">MODEL PERFORMANCE METRICS</h2>
+            
+            <div class="terminal-header">EVALUATION_RESULTS.log</div>
+            
+            <div class="results-box">
+                <strong>TEST_SET_ACCURACY: 91.4%</strong> (93 records, 20% holdout)<br><br>
+                <div class="metric"><strong>PRECISION_IL:</strong> 88.9%</div>
+                <div class="metric"><strong>RECALL_IL:</strong> 96.0%</div>
+                <div class="metric"><strong>F1_SCORE:</strong> 92.3%</div>
+                <div class="metric"><strong>MEAN_CONFIDENCE:</strong> 78.0%</div>
+            </div>
+            
+            <div class="terminal-header">CONFUSION_MATRIX.txt</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ACTUAL / PREDICTED</th>
+                        <th>PREDICTED_IL</th>
+                        <th>PREDICTED_VSESVIT</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>ACTUAL_IL</strong></td>
+                        <td class="highlight-green">48 ✓ [TRUE_POS]</td>
+                        <td class="highlight-red">2 ✗ [FALSE_NEG]</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ACTUAL_VSESVIT</strong></td>
+                        <td class="highlight-red">6 ✗ [FALSE_POS]</td>
+                        <td class="highlight-green">37 ✓ [TRUE_NEG]</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="terminal-header">KEY_FINDINGS.txt</div>
+            <ul>
+                <li>Model correctly predicts journal choice <strong>9/10 times</strong> for known authors</li>
+                <li>High recall (96%) --> strong IL detection capability</li>
+                <li>Only 6 Vsesvit misclassified as IL --> some journal overlap expected</li>
+                <li>Mean confidence 78% --> model learned meaningful patterns, not noise</li>
+            </ul>
+        </div>
+
+        <!-- Slide 4 -->
+        <div class="slide" data-slide="SLIDE_04">
+            <h2 class="section-title">HISTORICAL PATTERNS DISCOVERED</h2>
+            
+            <div class="terminal-header">AUTHOR_PREFERENCES_BY_ERA.csv</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>LEADER (ERA)</th>
+                        <th>TOP_AUTHORS</th>
+                        <th>LITERARY_TREND</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Khrushchev</strong><br>1950s-60s [THAW]</td>
+                        <td>Faulkner, Caldwell, Hemingway, Hughes, Saroyan</td>
+                        <td>Classic modernists, social_realism</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Brezhnev</strong><br>1970s [STAGNATION]</td>
+                        <td>Thurber, Brautigan, Hemingway, Buchwald, Hughes</td>
+                        <td>Satire, humor, escapism</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Gorbachev</strong><br>1980s-90s [GLASNOST]</td>
+                        <td>Woody Allen, Sheckley, Chandler, Hammett, Capote</td>
+                        <td>Contemporary, detective_fiction</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="terminal-header">JOURNAL_DIFFERENTIATION.txt</div>
+            <ul>
+                <li><strong>Mark Twain:</strong> 100% IL (13/13) --> literary_prestige + canonicity</li>
+                <li><strong>Ray Bradbury:</strong> 19% IL (3/16) --> sci-fi favored by Vsesvit</li>
+                <li><strong>Langston Hughes:</strong> 52% IL (13/25) --> split reflects evolving racial_politics</li>
+                <li><strong>Woody Allen:</strong> 80% IL (8/10) --> contemporary satire aligned with glasnost IL</li>
+            </ul>
+            
+            <div class="insight-box">
+                <strong>TEMPORAL_TREND:</strong> IL dominance: 50% (1960s) --> 60%+ (1980s-90s)<br>
+                Hypothesis: IL became premier venue as USSR liberalized
+            </div>
+        </div>
+
+        <!-- Slide 5 -->
+        <div class="slide" data-slide="SLIDE_05">
+            <h2 class="section-title">EXPLAINING AWAY & COUNTERFACTUALS</h2>
+            
+            <div class="terminal-header">EXPLAINING_AWAY_DEMONSTRATION.txt</div>
+            <div class="diagram">
+                <pre><strong>SCENARIO:</strong> Published in 1980s under Brezhnev
+<strong>QUERY:</strong> Does knowing journal update beliefs about author?
+
+<strong>PRIOR (no journal info):</strong>
+  - Richard Brautigan    11.9%  [BASELINE]
+  - James Thurber         8.9%
+  - Thomas Meehan         5.9%
+  - Woody Allen           3.0%
+
+<strong>POSTERIOR | Journal=IL:</strong>
+  - Richard Brautigan    15.8% ^^  [LITERARY]
+  - James Thurber        11.5% ^   [HUMOR/SATIRE]
+  - J.P. Donleavy         7.3% ^
+
+<strong>POSTERIOR | Journal=Vsesvit:</strong>
+  - Woody Allen           6.9% ^^  [CONTEMPORARY]
+  - Raymond Chandler      6.9% ^^  [DETECTIVE]
+  - Paul Horgan           6.9% ^
+</pre>
+            </div>
+            
+            <div class="insight-box">
+                <strong>INTERPRETATION:</strong> Journal identity "explains away" uncertainty about author type. Different journals maintained distinct author portfolios --> knowing journal dramatically updates probability distribution.
+            </div>
+            
+            <div class="terminal-header">COUNTERFACTUAL_ANALYSIS.csv</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>AUTHOR</th>
+                        <th>1950s</th>
+                        <th>1960s</th>
+                        <th>1970s</th>
+                        <th>1980s</th>
+                        <th>1990s</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>L. Hughes</strong></td>
+                        <td class="highlight-green">1.00 [IL]</td>
+                        <td>0.13 [IL]</td>
+                        <td class="highlight-green">1.00 [VS]</td>
+                        <td class="highlight-red">0.00 [IL]</td>
+                        <td class="highlight-red">0.01 [IL]</td>
+                    </tr>
+                    <tr>
+                        <td><strong>W. Faulkner</strong></td>
+                        <td class="highlight-green">1.00 [VS]</td>
+                        <td>0.13 [IL]</td>
+                        <td>0.58 [VS]</td>
+                        <td>0.34 [VS]</td>
+                        <td>0.50 [IL]</td>
+                    </tr>
+                    <tr>
+                        <td><strong>E. Hemingway</strong></td>
+                        <td class="highlight-green">1.00 [VS]</td>
+                        <td>0.38 [IL]</td>
+                        <td class="highlight-green">0.92 [VS]</td>
+                        <td class="highlight-red">0.00 [VS]</td>
+                        <td class="highlight-red">0.01 [VS]</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="results-box">
+                <strong>CONCLUSION:</strong><br>
+                Two-stage model successfully separates:<br>
+                &nbsp;&nbsp;- REGIME_CENSORSHIP: What gets published?<br>
+                &nbsp;&nbsp;- EDITORIAL_TASTE: Where does it appear?<br><br>
+                Hughes/Hemingway: High publishability during Thaw/Stagnation, dropped during Glasnost<br>
+                This suggests shifting cultural priorities toward contemporary Western authors
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>
